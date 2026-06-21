@@ -128,4 +128,3 @@ AI agents are good at sounding finished. DoneCheck makes them leave evidence:
 
 It is not a full linter, security scanner, or test framework. It is the cheap first gate that catches obvious AI-code misses before a human review, CI system, or hosted review bot spends time on them.
 
-Skipped: model-based review, AST parsing, config files, dashboards. Add those when this tiny gate stops being enough.
