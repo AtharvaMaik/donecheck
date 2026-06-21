@@ -6,6 +6,7 @@ import argparse
 import dataclasses
 import datetime as dt
 import fnmatch
+import os
 import re
 import subprocess
 import sys
@@ -187,6 +188,24 @@ def assess(findings: list[Finding], commands: list[CommandResult], files: list[P
     return "FAIL" if any(command.code != 0 for command in commands) else "PASS"
 
 
+def summary(status: str, findings: list[Finding], commands: list[CommandResult]) -> str:
+    lines = [f"DoneCheck: {status}"]
+    lines += [f"- {f.rule} {f.path}:{f.line} {f.text}" for f in findings]
+    lines += [f"- command failed: {c.command}" for c in commands if c.code != 0]
+    return "\n".join(lines) + "\n"
+
+
+def annotation_escape(value: str) -> str:
+    return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def github_annotations(findings: list[Finding]) -> list[str]:
+    return [
+        f"::error file={annotation_escape(f.path)},line={f.line},title={annotation_escape(f.rule)}::{annotation_escape(f.text)}"
+        for f in findings
+    ]
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Make coding agents prove done with local evidence.")
     parser.add_argument("--cmd", action="append", default=[], help="verification command to run, repeatable")
@@ -215,6 +234,10 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.write).write_text(body, encoding="utf-8")
 
     status = assess([] if args.no_fail_on_findings else findings, commands, paths)
+    if args.write != "-":
+        print(summary(status, findings, commands), end="")
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print("\n".join(github_annotations(findings)))
     return 0 if status == "PASS" else 1
 
 

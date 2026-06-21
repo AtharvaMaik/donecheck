@@ -57,7 +57,7 @@ Now the receipt says `PASS` and records the command output.
 | Local repo | `python donecheck.py --cmd "pytest -q"` |
 | Installed CLI | `pipx install git+https://github.com/AtharvaMaik/donecheck` |
 | Claude Code / Codex / Cursor | Tell the agent to run DoneCheck before claiming done |
-| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.3` |
+| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.4` |
 
 ## GitHub Action
 
@@ -72,12 +72,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: AtharvaMaik/donecheck@v0.1.3
+      - uses: AtharvaMaik/donecheck@v0.1.4
         with:
           command: pytest -q
 ```
 
-On pull requests, the action scans the PR diff against the base branch. Outside pull requests, pass `args: --all` to scan the whole repo.
+On pull requests, the action scans the PR diff against the base branch and emits GitHub error annotations for findings. Outside pull requests, pass `args: --all` to scan the whole repo.
 
 ## Agent Prompt
 
