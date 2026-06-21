@@ -16,17 +16,21 @@ runs:
   using: composite
   steps:
     - shell: bash
+      env:
+        DONECHECK_COMMAND: ${{ inputs.command }}
+        DONECHECK_ARGS: ${{ inputs.args }}
       run: |
         set -euo pipefail
         donecheck=(python "$GITHUB_ACTION_PATH/donecheck.py")
         if [ -n "${GITHUB_BASE_REF:-}" ]; then
-          git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
+          git fetch --no-tags origin "$GITHUB_BASE_REF"
           donecheck+=(--base "origin/$GITHUB_BASE_REF")
         fi
-        if [ -n "${{ inputs.command }}" ]; then
-          donecheck+=(--cmd "${{ inputs.command }}")
+        if [ -n "$DONECHECK_COMMAND" ]; then
+          donecheck+=(--cmd "$DONECHECK_COMMAND")
         fi
-        if [ -n "${{ inputs.args }}" ]; then
-          donecheck+=(${{ inputs.args }})
+        if [ -n "$DONECHECK_ARGS" ]; then
+          mapfile -t extra_args < <(python -c 'import os, shlex; [print(arg) for arg in shlex.split(os.environ["DONECHECK_ARGS"])]')
+          donecheck+=("${extra_args[@]}")
         fi
         "${donecheck[@]}"

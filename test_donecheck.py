@@ -34,12 +34,89 @@ class DoneCheckTests(unittest.TestCase):
 
         self.assertEqual(result, "FAIL")
 
+    def test_changed_code_path_needs_command_evidence(self):
+        commands = [donecheck.CommandResult("python -m py_compile other.py", 0, "")]
+
+        findings = donecheck.proof_findings([], commands, [Path("app.py")])
+
+        self.assertEqual(findings[0].rule, "missing_path_evidence")
+        self.assertIn("app.py", findings[0].text)
+
+    def test_no_verification_command_is_skipped_for_changed_files(self):
+        result = donecheck.assess([], [], [Path("app.py")])
+
+        self.assertEqual(result, "SKIPPED")
+
+    def test_thin_proof_file_is_flagged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proof = Path(tmp) / "PROOF.md"
+            proof.write_text("# Proof\n\nTests passed.\n", encoding="utf-8")
+
+            findings = donecheck.proof_file_findings([proof], "fresh")
+
+        self.assertEqual(findings[0].rule, "thin_proof_file")
+
+    def test_stale_donecheck_receipt_is_flagged_when_hash_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proof = Path(tmp) / "PROOF.md"
+            proof.write_text("# DoneCheck Receipt: PASS\n\n- evidence hash: `old`\n", encoding="utf-8")
+
+            findings = donecheck.proof_file_findings([proof], "fresh")
+
+        self.assertEqual(findings[0].rule, "stale_proof")
+
+    def test_source_files_are_not_proof_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "donecheck.py"
+            source.write_text('# DoneCheck Receipt: PASS\n', encoding="utf-8")
+
+            findings = donecheck.proof_file_findings([source], "fresh")
+
+        self.assertEqual(findings, [])
+
+    def test_receipt_records_stale_inputs(self):
+        body = donecheck.receipt(
+            [],
+            [donecheck.CommandResult("pytest -q", 0, "ok")],
+            [Path("app.py")],
+            0.1,
+            evidence_hash="abc123",
+            base_ref="origin/main",
+            base_commit="base123",
+        )
+
+        self.assertIn("- base: `origin/main`", body)
+        self.assertIn("- base commit: `base123`", body)
+        self.assertIn("- evidence hash: `abc123`", body)
+        self.assertIn("stale if", body)
+
     def test_base_ref_scans_merge_base_diff(self):
-        with mock.patch("donecheck.git_output", return_value="app.py\nREADME.md\n") as git_output:
+        def git_output(args):
+            if args == ["merge-base", "origin/main", "HEAD"]:
+                return "abc123"
+            if args == ["diff", "--name-only", "abc123..HEAD"]:
+                return "app.py\nREADME.md\n"
+            self.fail(f"unexpected git args: {args}")
+
+        with mock.patch("donecheck.git_output", side_effect=git_output) as mocked_git_output:
             files = donecheck.changed_files("origin/main")
 
-        git_output.assert_called_once_with(["diff", "--name-only", "origin/main..HEAD"])
+        mocked_git_output.assert_has_calls(
+            [
+                mock.call(["merge-base", "origin/main", "HEAD"]),
+                mock.call(["diff", "--name-only", "abc123..HEAD"]),
+            ]
+        )
         self.assertEqual(files, [Path("app.py"), Path("README.md")])
+
+    def test_action_inputs_are_not_raw_shell_interpolation(self):
+        text = Path("action.yml").read_text(encoding="utf-8")
+
+        self.assertIn("DONECHECK_COMMAND: ${{ inputs.command }}", text)
+        self.assertIn('donecheck+=(--cmd "$DONECHECK_COMMAND")', text)
+        self.assertIn('shlex.split(os.environ["DONECHECK_ARGS"])', text)
+        self.assertNotIn('donecheck+=(--cmd "${{ inputs.command }}")', text)
+        self.assertNotIn("donecheck+=(${{ inputs.args }})", text)
 
     def test_summary_lists_findings_and_commands(self):
         findings = [donecheck.Finding("missing_evidence", "-", 0, "no files or commands checked")]
