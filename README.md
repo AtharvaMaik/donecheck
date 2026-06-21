@@ -40,6 +40,10 @@ Before claiming done, run donecheck and fix anything it reports.
 ## What It Catches
 
 - unfinished markers and placeholder phrases in changed files
+- narrow verification that does not mention changed code paths
+- proof files that only say tests passed without output, exit code, and timestamp
+- stale DoneCheck receipts when files, commands, or base inputs change
+- skipped verification as `SKIPPED`, not a quiet pass
 - swallowed Python exceptions and empty JavaScript catch blocks
 - accidental literal secrets
 - unsafe `eval` / `exec`
@@ -69,6 +73,14 @@ python donecheck.py --all --cmd "python -m py_compile app.py"
 ```
 
 Now the receipt says `PASS` and records the command output.
+
+If verification cannot run, say so explicitly:
+
+```bash
+python donecheck.py --skip-reason "missing DATABASE_URL"
+```
+
+That writes a `SKIPPED` receipt and exits non-zero.
 
 ## Use It Anywhere
 
