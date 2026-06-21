@@ -96,10 +96,6 @@ If it fails, fix the work and rerun it. Include the DONECHECK.md status in your 
 
 There is also a drop-in skill at `skills/donecheck/SKILL.md`.
 
-## Launch Kit
-
-Launching or sharing DoneCheck? Use [LAUNCH.md](LAUNCH.md) for ready-to-post Show HN, X, LinkedIn, Reddit, and community copy.
-
 ## Why It Exists
 
 AI agents are good at sounding finished. DoneCheck makes them leave evidence:
