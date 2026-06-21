@@ -72,7 +72,7 @@ def current_commit() -> str:
 
 def changed_files(base_ref: str | None = None) -> list[Path]:
     if base_ref:
-        return [Path(line) for line in git_output(["diff", "--name-only", f"{base_ref}...HEAD"]).splitlines() if line]
+        return [Path(line) for line in git_output(["diff", "--name-only", f"{base_ref}..HEAD"]).splitlines() if line]
 
     names = set()
     for args in (["diff", "--name-only"], ["diff", "--cached", "--name-only"], ["ls-files", "--others", "--exclude-standard"]):

@@ -37,7 +37,7 @@ class DoneCheckTests(unittest.TestCase):
         with mock.patch("donecheck.git_output", return_value="app.py\nREADME.md\n") as git_output:
             files = donecheck.changed_files("origin/main")
 
-        git_output.assert_called_once_with(["diff", "--name-only", "origin/main...HEAD"])
+        git_output.assert_called_once_with(["diff", "--name-only", "origin/main..HEAD"])
         self.assertEqual(files, [Path("app.py"), Path("README.md")])
 
 
