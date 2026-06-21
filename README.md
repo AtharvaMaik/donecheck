@@ -1,4 +1,4 @@
-# DoneCheck
+# DoneCheck: proof-of-done for AI coding agents
 
 [![ci](https://github.com/AtharvaMaik/donecheck/actions/workflows/ci.yml/badge.svg)](https://github.com/AtharvaMaik/donecheck/actions/workflows/ci.yml)
 [![release](https://img.shields.io/github/v/release/AtharvaMaik/donecheck)](https://github.com/AtharvaMaik/donecheck/releases)
@@ -6,7 +6,11 @@
 
 Your AI coding agent says it is done. Make it prove it.
 
-`donecheck` is a zero-dependency proof gate for AI-assisted code changes. It scans the changed files, runs the verification command you choose, and writes a small `DONECHECK.md` receipt before anyone claims the work is finished.
+Works with Codex, Claude Code, Cursor, OpenCode, local CLIs, and GitHub Actions.
+
+`donecheck` is a zero-dependency proof-of-done gate for AI-assisted code changes. It scans the changed files, runs the verification command you choose, and writes a small `DONECHECK.md` receipt before anyone claims the work is finished.
+
+Star it if you want a tiny AI coding agent verification gate you can drop into any repo.
 
 ![DoneCheck terminal demo](assets/donecheck-demo.svg)
 
@@ -39,7 +43,7 @@ Before claiming done, run donecheck and fix anything it reports.
 - swallowed Python exceptions and empty JavaScript catch blocks
 - accidental literal secrets
 - unsafe `eval` / `exec`
-- failed or skipped verification commands
+- failed verification commands and missing evidence when nothing was checked
 
 ## 20 Second Demo
 
