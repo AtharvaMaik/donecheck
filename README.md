@@ -62,7 +62,7 @@ Now the receipt says `PASS` and records the command output.
 To create the GitHub Action workflow in a repo:
 
 ```bash
-python donecheck.py --init --cmd "pytest -q"
+donecheck --init --cmd "pytest -q"
 ```
 
 ## GitHub Action
