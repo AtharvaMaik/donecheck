@@ -15,8 +15,15 @@ runs:
     - shell: bash
       run: |
         set -euo pipefail
-        if [ -n "${{ inputs.command }}" ]; then
-          python "$GITHUB_ACTION_PATH/donecheck.py" --cmd "${{ inputs.command }}" ${{ inputs.args }}
-        else
-          python "$GITHUB_ACTION_PATH/donecheck.py" ${{ inputs.args }}
+        donecheck=(python "$GITHUB_ACTION_PATH/donecheck.py")
+        if [ -n "${GITHUB_BASE_REF:-}" ]; then
+          git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
+          donecheck+=(--base "origin/$GITHUB_BASE_REF")
         fi
+        if [ -n "${{ inputs.command }}" ]; then
+          donecheck+=(--cmd "${{ inputs.command }}")
+        fi
+        if [ -n "${{ inputs.args }}" ]; then
+          donecheck+=(${{ inputs.args }})
+        fi
+        "${donecheck[@]}"

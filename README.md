@@ -1,49 +1,61 @@
 # DoneCheck
 
+[![ci](https://github.com/AtharvaMaik/donecheck/actions/workflows/ci.yml/badge.svg)](https://github.com/AtharvaMaik/donecheck/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/AtharvaMaik/donecheck)](https://github.com/AtharvaMaik/donecheck/releases)
+[![license](https://img.shields.io/github/license/AtharvaMaik/donecheck)](LICENSE)
+
 Your AI coding agent says it is done. Make it prove it.
 
-`donecheck` is a zero-dependency CLI that turns "done" into a small receipt:
-
-- what files changed
-- which cheap failure patterns were checked
-- which verification commands actually ran
-- whether the work is safe to hand to a human
+`donecheck` is a zero-dependency proof gate for AI-assisted code changes. It scans the changed files, runs the verification command you choose, and writes a small `DONECHECK.md` receipt before anyone claims the work is finished.
 
 ```bash
 python donecheck.py --cmd "pytest -q"
 cat DONECHECK.md
 ```
 
-If the diff contains unfinished placeholders, swallowed errors, obvious secret literals, unsafe `eval`, or a failing command, `donecheck` exits non-zero.
+If there are no files and no command, it fails. No evidence, no "done".
 
-## Why
+## What It Catches
 
-AI agents are great at sounding finished. They are less great at proving it.
-
-DoneCheck is a boring gate for the recurring failure modes that waste review time:
-
-- unfinished markers and placeholder phrases left in changed files
-- `except: pass` and empty JavaScript `catch` blocks
+- unfinished markers and placeholder phrases in changed files
+- swallowed Python exceptions and empty JavaScript catch blocks
 - accidental literal secrets
 - unsafe `eval` / `exec`
-- skipped tests hidden behind a confident final answer
+- failed or skipped verification commands
 
-It is intentionally small. Keep your real linter, tests, review bot, and human reviewer. Run this first so they do not spend time on obvious misses.
-
-## Install
-
-Use it straight from the repo:
+## 20 Second Demo
 
 ```bash
-python donecheck.py --cmd "pytest -q"
+git init demo && cd demo
+curl -O https://raw.githubusercontent.com/AtharvaMaik/donecheck/main/donecheck.py
+printf 'def charge_card():\n    # TODO wire Stripe later\n    return True\n' > app.py
+git add app.py && git commit -m init
+python donecheck.py --all
 ```
 
-Or install as a command:
+Output:
+
+```text
+# DoneCheck Receipt: FAIL
+- `unfinished_marker` in `app.py:2`: # TODO wire Stripe later
+```
+
+Fix the file, then run:
 
 ```bash
-pipx install git+https://github.com/AtharvaMaik/donecheck
-donecheck --cmd "pytest -q"
+python donecheck.py --all --cmd "python -m py_compile app.py"
 ```
+
+Now the receipt says `PASS` and records the command output.
+
+## Use It Anywhere
+
+| Place | Command |
+| --- | --- |
+| Local repo | `python donecheck.py --cmd "pytest -q"` |
+| Installed CLI | `pipx install git+https://github.com/AtharvaMaik/donecheck` |
+| Claude Code / Codex / Cursor | Tell the agent to run DoneCheck before claiming done |
+| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.1` |
 
 ## GitHub Action
 
@@ -56,50 +68,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: AtharvaMaik/donecheck@main
+        with:
+          fetch-depth: 0
+      - uses: AtharvaMaik/donecheck@v0.1.1
         with:
           command: pytest -q
 ```
 
-## Agent Prompt
+On pull requests, the action scans the PR diff against the base branch. Outside pull requests, pass `args: --all` to scan the whole repo.
 
-Tell your coding agent:
+## Agent Prompt
 
 ```text
 Before claiming done, run:
 python donecheck.py --cmd "<project test command>"
 
-If it fails, fix the work and rerun it. Include DONECHECK.md in your final answer.
+If it fails, fix the work and rerun it. Include the DONECHECK.md status in your final answer.
 ```
 
-## Examples
+There is also a drop-in skill at `skills/donecheck/SKILL.md`.
 
-Failing diff:
+## Why It Exists
 
-```python
-def charge_card():
-    # TODO wire Stripe later
-    return True
-```
+AI agents are good at sounding finished. DoneCheck makes them leave evidence:
 
-Receipt:
+- changed files
+- findings
+- commands run
+- exit codes
+- recent command output
 
-```text
-DoneCheck Receipt: FAIL
-- unfinished_marker in app.py:2: # TODO wire Stripe later
-```
-
-Passing run:
-
-```text
-DoneCheck Receipt: PASS
-- files checked: 4
-- findings: 0
-- commands: 1
-```
-
-## What It Is Not
-
-DoneCheck is not a general linter, security scanner, or test framework. It is a fast proof-of-work floor for AI-assisted changes.
+It is not a full linter, security scanner, or test framework. It is the cheap first gate that catches obvious AI-code misses before a human review, CI system, or hosted review bot spends time on them.
 
 Skipped: model-based review, AST parsing, config files, dashboards. Add those when this tiny gate stops being enough.

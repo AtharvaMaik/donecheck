@@ -6,7 +6,6 @@ import argparse
 import dataclasses
 import datetime as dt
 import fnmatch
-import os
 import re
 import subprocess
 import sys
@@ -22,7 +21,6 @@ DEFAULT_EXCLUDES = (
     "build/*",
     "__pycache__/*",
     "*.lock",
-    "*.md",
     "DONECHECK.md",
 )
 
@@ -72,7 +70,10 @@ def current_commit() -> str:
     return proc.stdout.strip() if proc.returncode == 0 else "no-commit-yet"
 
 
-def changed_files() -> list[Path]:
+def changed_files(base_ref: str | None = None) -> list[Path]:
+    if base_ref:
+        return [Path(line) for line in git_output(["diff", "--name-only", f"{base_ref}...HEAD"]).splitlines() if line]
+
     names = set()
     for args in (["diff", "--name-only"], ["diff", "--cached", "--name-only"], ["ls-files", "--others", "--exclude-standard"]):
         names.update(line for line in git_output(args).splitlines() if line)
@@ -84,11 +85,28 @@ def excluded(path: Path, patterns: tuple[str, ...]) -> bool:
     return any(fnmatch.fnmatch(value, pattern) for pattern in patterns)
 
 
+def strip_markdown_fences(text: str) -> str:
+    lines = []
+    fenced = False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            lines.append("")
+        elif fenced:
+            lines.append("")
+        else:
+            lines.append(line)
+    return "\n".join(lines)
+
+
 def scan_file(path: Path) -> list[Finding]:
     try:
         text = path.read_text(encoding="utf-8")
     except (UnicodeDecodeError, OSError):
         return []
+
+    if path.suffix.lower() in {".md", ".markdown"}:
+        text = strip_markdown_fences(text)
 
     findings: list[Finding] = []
     lines = text.splitlines()
@@ -156,11 +174,25 @@ def receipt(
     return "\n".join(lines).rstrip() + "\n"
 
 
+def proof_findings(findings: list[Finding], commands: list[CommandResult], files: list[Path]) -> list[Finding]:
+    if not findings and not commands and not files:
+        return [Finding("missing_evidence", "-", 0, "no files or commands checked")]
+    return findings
+
+
+def assess(findings: list[Finding], commands: list[CommandResult], files: list[Path] | None = None) -> str:
+    files = files or []
+    if proof_findings(findings, commands, files):
+        return "FAIL"
+    return "FAIL" if any(command.code != 0 for command in commands) else "PASS"
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Make coding agents prove done with local evidence.")
     parser.add_argument("--cmd", action="append", default=[], help="verification command to run, repeatable")
     parser.add_argument("--write", default="DONECHECK.md", help="receipt path, or '-' for stdout")
     parser.add_argument("--all", action="store_true", help="scan every tracked file instead of changed files")
+    parser.add_argument("--base", help="scan files changed since this git ref, for example origin/main")
     parser.add_argument("--exclude", action="append", default=[], help="extra glob to skip")
     parser.add_argument("--no-fail-on-findings", action="store_true", help="write receipt but exit 0 for findings")
     return parser.parse_args(argv)
@@ -169,10 +201,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     started = dt.datetime.now().timestamp()
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    paths = [Path(p) for p in git_output(["ls-files"]).splitlines()] if args.all else changed_files()
+    paths = [Path(p) for p in git_output(["ls-files"]).splitlines()] if args.all else changed_files(args.base)
     excludes = (*DEFAULT_EXCLUDES, *tuple(args.exclude))
     findings = scan(paths, excludes)
     commands = [run(command) for command in args.cmd]
+    findings = proof_findings(findings, commands, paths)
     elapsed = dt.datetime.now().timestamp() - started
     body = receipt(findings, commands, paths, elapsed)
 
@@ -181,9 +214,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         Path(args.write).write_text(body, encoding="utf-8")
 
-    command_failed = any(command.code != 0 for command in commands)
-    finding_failed = findings and not args.no_fail_on_findings
-    return 1 if command_failed or finding_failed else 0
+    status = assess([] if args.no_fail_on_findings else findings, commands, paths)
+    return 0 if status == "PASS" else 1
 
 
 if __name__ == "__main__":
