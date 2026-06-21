@@ -25,6 +25,7 @@ DEFAULT_EXCLUDES = (
     "DONECHECK.md",
 )
 
+VERSION = "0.1.8"
 ACTION_REF = "v0.1.8"
 
 UNFINISHED_WORDS = ("TO" + "DO", "FIX" + "ME", "X" * 3, "HA" + "CK")
@@ -260,6 +261,7 @@ def init_action(command: str, workflow: Path = Path(".github/workflows/donecheck
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Make coding agents prove done with local evidence.")
+    parser.add_argument("--version", action="version", version=f"donecheck {VERSION}")
     parser.add_argument("--cmd", action="append", default=[], help="verification command to run, repeatable")
     parser.add_argument("--write", default="DONECHECK.md", help="receipt path, or '-' for stdout")
     parser.add_argument("--all", action="store_true", help="scan every tracked file instead of changed files")

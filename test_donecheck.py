@@ -99,6 +99,16 @@ class DoneCheckTests(unittest.TestCase):
 
         self.assertEqual(lines, ["::error file=app.py,line=2,title=unfinished_marker::bad: line%0Anext"])
 
+    def test_version_flag_prints_version(self):
+        stdout = io.StringIO()
+
+        with mock.patch("sys.stdout", stdout):
+            with self.assertRaises(SystemExit) as raised:
+                donecheck.main(["--version"])
+
+        self.assertEqual(raised.exception.code, 0)
+        self.assertIn("donecheck 0.1.8", stdout.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
