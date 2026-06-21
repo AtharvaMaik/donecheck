@@ -25,7 +25,7 @@ DEFAULT_EXCLUDES = (
     "DONECHECK.md",
 )
 
-ACTION_REF = "v0.1.6"
+ACTION_REF = "v0.1.7"
 
 UNFINISHED_WORDS = ("TO" + "DO", "FIX" + "ME", "X" * 3, "HA" + "CK")
 UNFINISHED_PHRASES = ("not " + "implemented", "coming " + "soon", "st" + "ub")

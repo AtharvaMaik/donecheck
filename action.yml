@@ -1,5 +1,8 @@
 name: DoneCheck
 description: "Make AI coding agents prove done with local evidence."
+branding:
+  icon: check-circle
+  color: green
 inputs:
   command:
     description: "Verification command, for example: pytest -q"
