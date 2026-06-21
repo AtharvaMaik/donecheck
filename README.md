@@ -24,6 +24,7 @@ Add DoneCheck to a repo using AI coding agents:
 ```bash
 pipx install git+https://github.com/AtharvaMaik/donecheck
 donecheck --init --cmd "pytest -q"
+donecheck --agent-prompt --cmd "pytest -q"
 ```
 
 Then tell Codex, Claude Code, Cursor, or any agent:

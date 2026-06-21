@@ -268,6 +268,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--base", help="scan files changed since this git ref, for example origin/main")
     parser.add_argument("--exclude", action="append", default=[], help="extra glob to skip")
     parser.add_argument("--init", action="store_true", help="create .github/workflows/donecheck.yml")
+    parser.add_argument("--agent-prompt", action="store_true", help="print a copy-paste instruction for coding agents")
     parser.add_argument("--no-fail-on-findings", action="store_true", help="write receipt but exit 0 for findings")
     return parser.parse_args(argv)
 
@@ -277,6 +278,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     if args.init:
         return init_action(args.cmd[0] if args.cmd else "")
+    if args.agent_prompt:
+        command = args.cmd[0] if args.cmd else "<project test command>"
+        print(
+            f'Before claiming done, run:\ndonecheck --cmd "{command}"\n\n'
+            "If it fails, fix the work and rerun it. Include the DONECHECK.md status in your final answer."
+        )
+        return 0
 
     paths = [Path(p) for p in git_output(["ls-files"]).splitlines()] if args.all else changed_files(args.base)
     excludes = (*DEFAULT_EXCLUDES, *tuple(args.exclude))

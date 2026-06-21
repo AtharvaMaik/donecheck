@@ -109,6 +109,16 @@ class DoneCheckTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, 0)
         self.assertIn("donecheck 0.1.8", stdout.getvalue())
 
+    def test_agent_prompt_prints_copy_paste_instruction(self):
+        stdout = io.StringIO()
+
+        with mock.patch("sys.stdout", stdout):
+            code = donecheck.main(["--agent-prompt", "--cmd", "pytest -q"])
+
+        self.assertEqual(code, 0)
+        self.assertIn('donecheck --cmd "pytest -q"', stdout.getvalue())
+        self.assertIn("Before claiming done", stdout.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
