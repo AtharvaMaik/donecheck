@@ -88,7 +88,7 @@ class DoneCheckTests(unittest.TestCase):
             text = workflow.read_text(encoding="utf-8")
 
         self.assertEqual(code, 0)
-        self.assertIn("uses: AtharvaMaik/donecheck@v0.1.7", text)
+        self.assertIn("uses: AtharvaMaik/donecheck@v0.1.8", text)
         self.assertIn("command: >-", text)
         self.assertIn("pytest -q", text)
 
