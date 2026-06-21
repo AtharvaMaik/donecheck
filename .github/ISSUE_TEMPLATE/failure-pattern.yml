@@ -1,0 +1,27 @@
+name: Failure pattern
+description: Suggest a small AI-code failure pattern DoneCheck should catch.
+title: "Pattern: "
+labels: ["failure-pattern"]
+body:
+  - type: textarea
+    id: example
+    attributes:
+      label: Small example
+      description: Paste the smallest code snippet that should fail.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this matters
+      description: Explain the bug or review waste this catches.
+    validations:
+      required: true
+  - type: textarea
+    id: false-positive
+    attributes:
+      label: Likely false positives
+      description: Where could this rule annoy people?
+    validations:
+      required: false
