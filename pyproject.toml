@@ -1,0 +1,19 @@
+[project]
+name = "donecheck"
+version = "0.1.0"
+description = "Your coding agent says it is done. Make it prove it."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Atharva Maik" }]
+keywords = ["ai", "agents", "codex", "claude-code", "code-review", "verification"]
+
+[project.scripts]
+donecheck = "donecheck:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["donecheck"]

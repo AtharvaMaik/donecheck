@@ -1,0 +1,22 @@
+name: DoneCheck
+description: "Make AI coding agents prove done with local evidence."
+inputs:
+  command:
+    description: "Verification command, for example: pytest -q"
+    required: false
+    default: ""
+  args:
+    description: "Extra donecheck args"
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        if [ -n "${{ inputs.command }}" ]; then
+          python "$GITHUB_ACTION_PATH/donecheck.py" --cmd "${{ inputs.command }}" ${{ inputs.args }}
+        else
+          python "$GITHUB_ACTION_PATH/donecheck.py" ${{ inputs.args }}
+        fi
