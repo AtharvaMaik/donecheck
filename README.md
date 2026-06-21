@@ -31,18 +31,18 @@ If there are no files and no command, it fails. No evidence, no "done".
 git init demo && cd demo
 curl -O https://raw.githubusercontent.com/AtharvaMaik/donecheck/main/donecheck.py
 printf 'def charge_card():\n    # TODO wire Stripe later\n    return True\n' > app.py
-git add app.py && git commit -m init
+git add app.py
 python donecheck.py --all
 ```
 
 Output:
 
 ```text
-# DoneCheck Receipt: FAIL
-- `unfinished_marker` in `app.py:2`: # TODO wire Stripe later
+DoneCheck: FAIL
+- unfinished_marker app.py:2 # TODO wire Stripe later
 ```
 
-Fix the file, then run:
+The full receipt is in `DONECHECK.md`. Fix the file, then run:
 
 ```bash
 python donecheck.py --all --cmd "python -m py_compile app.py"
@@ -57,7 +57,7 @@ Now the receipt says `PASS` and records the command output.
 | Local repo | `python donecheck.py --cmd "pytest -q"` |
 | Installed CLI | `pipx install git+https://github.com/AtharvaMaik/donecheck` |
 | Claude Code / Codex / Cursor | Tell the agent to run DoneCheck before claiming done |
-| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.4` |
+| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.5` |
 
 ## GitHub Action
 
@@ -72,12 +72,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: AtharvaMaik/donecheck@v0.1.4
+      - uses: AtharvaMaik/donecheck@v0.1.5
         with:
           command: pytest -q
 ```
 
-On pull requests, the action scans the PR diff against the base branch and emits GitHub error annotations for findings. Outside pull requests, pass `args: --all` to scan the whole repo.
+On pull requests, the action scans the PR diff against the base branch, emits GitHub error annotations for findings, and adds the full receipt to the Actions step summary. Outside pull requests, pass `args: --all` to scan the whole repo.
 
 ## Agent Prompt
 

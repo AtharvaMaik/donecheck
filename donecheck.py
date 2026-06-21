@@ -191,7 +191,12 @@ def assess(findings: list[Finding], commands: list[CommandResult], files: list[P
 def summary(status: str, findings: list[Finding], commands: list[CommandResult]) -> str:
     lines = [f"DoneCheck: {status}"]
     lines += [f"- {f.rule} {f.path}:{f.line} {f.text}" for f in findings]
-    lines += [f"- command failed: {c.command}" for c in commands if c.code != 0]
+    for command in commands:
+        if command.code != 0:
+            lines.append(f"- command failed: {command.command}")
+            if command.output:
+                lines.append("  output:")
+                lines += [f"  {line}" for line in command.output[-1200:].splitlines()]
     return "\n".join(lines) + "\n"
 
 
@@ -204,6 +209,17 @@ def github_annotations(findings: list[Finding]) -> list[str]:
         f"::error file={annotation_escape(f.path)},line={f.line},title={annotation_escape(f.rule)}::{annotation_escape(f.text)}"
         for f in findings
     ]
+
+
+def write_github_step_summary(body: str) -> None:
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+    try:
+        with Path(summary_path).open("a", encoding="utf-8") as file:
+            file.write(body)
+    except OSError as error:
+        print(f"DoneCheck: could not write GitHub step summary: {error}", file=sys.stderr)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -232,6 +248,7 @@ def main(argv: list[str] | None = None) -> int:
         print(body, end="")
     else:
         Path(args.write).write_text(body, encoding="utf-8")
+    write_github_step_summary(body)
 
     status = assess([] if args.no_fail_on_findings else findings, commands, paths)
     if args.write != "-":
