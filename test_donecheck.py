@@ -74,6 +74,24 @@ class DoneCheckTests(unittest.TestCase):
 
         self.assertIn("could not write GitHub step summary", stderr.getvalue())
 
+    def test_init_action_writes_github_action_workflow(self):
+        init_action = getattr(donecheck, "init_action", None)
+        self.assertIsNotNone(init_action, "--init should expose init_action")
+        if init_action is None:
+            return
+
+        with tempfile.TemporaryDirectory() as tmp:
+            workflow = Path(tmp) / ".github" / "workflows" / "donecheck.yml"
+            with mock.patch("sys.stdout", io.StringIO()):
+                code = init_action("pytest -q", workflow)
+
+            text = workflow.read_text(encoding="utf-8")
+
+        self.assertEqual(code, 0)
+        self.assertIn("uses: AtharvaMaik/donecheck@v0.1.6", text)
+        self.assertIn("command: >-", text)
+        self.assertIn("pytest -q", text)
+
     def test_github_annotations_escape_special_characters(self):
         finding = donecheck.Finding("unfinished_marker", "app.py", 2, "bad: line\nnext")
 

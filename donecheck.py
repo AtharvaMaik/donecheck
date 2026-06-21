@@ -25,6 +25,8 @@ DEFAULT_EXCLUDES = (
     "DONECHECK.md",
 )
 
+ACTION_REF = "v0.1.6"
+
 UNFINISHED_WORDS = ("TO" + "DO", "FIX" + "ME", "X" * 3, "HA" + "CK")
 UNFINISHED_PHRASES = ("not " + "implemented", "coming " + "soon", "st" + "ub")
 UNFINISHED_RE = r"\b(" + "|".join(UNFINISHED_WORDS) + r")\b|" + "|".join(re.escape(p) for p in UNFINISHED_PHRASES)
@@ -222,6 +224,40 @@ def write_github_step_summary(body: str) -> None:
         print(f"DoneCheck: could not write GitHub step summary: {error}", file=sys.stderr)
 
 
+def action_workflow(command: str) -> str:
+    lines = [
+        "name: donecheck",
+        "on: [pull_request]",
+        "",
+        "jobs:",
+        "  donecheck:",
+        "    runs-on: ubuntu-latest",
+        "    steps:",
+        "      - uses: actions/checkout@v4",
+        "        with:",
+        "          fetch-depth: 0",
+        f"      - uses: AtharvaMaik/donecheck@{ACTION_REF}",
+    ]
+    command = " ".join(command.splitlines()).strip()
+    if command:
+        lines += [
+            "        with:",
+            "          command: >-",
+            f"            {command}",
+        ]
+    return "\n".join(lines) + "\n"
+
+
+def init_action(command: str, workflow: Path = Path(".github/workflows/donecheck.yml")) -> int:
+    if workflow.exists():
+        print(f"DoneCheck: {workflow} already exists", file=sys.stderr)
+        return 1
+    workflow.parent.mkdir(parents=True, exist_ok=True)
+    workflow.write_text(action_workflow(command), encoding="utf-8")
+    print(f"DoneCheck: wrote {workflow}")
+    return 0
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Make coding agents prove done with local evidence.")
     parser.add_argument("--cmd", action="append", default=[], help="verification command to run, repeatable")
@@ -229,6 +265,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--all", action="store_true", help="scan every tracked file instead of changed files")
     parser.add_argument("--base", help="scan files changed since this git ref, for example origin/main")
     parser.add_argument("--exclude", action="append", default=[], help="extra glob to skip")
+    parser.add_argument("--init", action="store_true", help="create .github/workflows/donecheck.yml")
     parser.add_argument("--no-fail-on-findings", action="store_true", help="write receipt but exit 0 for findings")
     return parser.parse_args(argv)
 
@@ -236,6 +273,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     started = dt.datetime.now().timestamp()
     args = parse_args(sys.argv[1:] if argv is None else argv)
+    if args.init:
+        return init_action(args.cmd[0] if args.cmd else "")
+
     paths = [Path(p) for p in git_output(["ls-files"]).splitlines()] if args.all else changed_files(args.base)
     excludes = (*DEFAULT_EXCLUDES, *tuple(args.exclude))
     findings = scan(paths, excludes)

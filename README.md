@@ -57,7 +57,13 @@ Now the receipt says `PASS` and records the command output.
 | Local repo | `python donecheck.py --cmd "pytest -q"` |
 | Installed CLI | `pipx install git+https://github.com/AtharvaMaik/donecheck` |
 | Claude Code / Codex / Cursor | Tell the agent to run DoneCheck before claiming done |
-| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.5` |
+| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.6` |
+
+To create the GitHub Action workflow in a repo:
+
+```bash
+python donecheck.py --init --cmd "pytest -q"
+```
 
 ## GitHub Action
 
@@ -72,7 +78,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: AtharvaMaik/donecheck@v0.1.5
+      - uses: AtharvaMaik/donecheck@v0.1.6
         with:
           command: pytest -q
 ```

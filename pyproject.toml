@@ -1,6 +1,6 @@
 [project]
 name = "donecheck"
-version = "0.1.5"
+version = "0.1.6"
 description = "Your coding agent says it is done. Make it prove it."
 readme = "README.md"
 requires-python = ">=3.10"
