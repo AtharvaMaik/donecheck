@@ -8,6 +8,8 @@ Your AI coding agent says it is done. Make it prove it.
 
 `donecheck` is a zero-dependency proof gate for AI-assisted code changes. It scans the changed files, runs the verification command you choose, and writes a small `DONECHECK.md` receipt before anyone claims the work is finished.
 
+![DoneCheck terminal demo](assets/donecheck-demo.svg)
+
 ```bash
 python donecheck.py --cmd "pytest -q"
 cat DONECHECK.md
@@ -55,7 +57,7 @@ Now the receipt says `PASS` and records the command output.
 | Local repo | `python donecheck.py --cmd "pytest -q"` |
 | Installed CLI | `pipx install git+https://github.com/AtharvaMaik/donecheck` |
 | Claude Code / Codex / Cursor | Tell the agent to run DoneCheck before claiming done |
-| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.2` |
+| GitHub Actions | `uses: AtharvaMaik/donecheck@v0.1.3` |
 
 ## GitHub Action
 
@@ -70,7 +72,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: AtharvaMaik/donecheck@v0.1.2
+      - uses: AtharvaMaik/donecheck@v0.1.3
         with:
           command: pytest -q
 ```
@@ -87,6 +89,10 @@ If it fails, fix the work and rerun it. Include the DONECHECK.md status in your 
 ```
 
 There is also a drop-in skill at `skills/donecheck/SKILL.md`.
+
+## Launch Kit
+
+Launching or sharing DoneCheck? Use [LAUNCH.md](LAUNCH.md) for ready-to-post Show HN, X, LinkedIn, Reddit, and community copy.
 
 ## Why It Exists
 
