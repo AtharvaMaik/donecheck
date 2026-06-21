@@ -17,6 +17,21 @@ cat DONECHECK.md
 
 If there are no files and no command, it fails. No evidence, no "done".
 
+## Quick Start
+
+Add DoneCheck to a repo using AI coding agents:
+
+```bash
+pipx install git+https://github.com/AtharvaMaik/donecheck
+donecheck --init --cmd "pytest -q"
+```
+
+Then tell Codex, Claude Code, Cursor, or any agent:
+
+```text
+Before claiming done, run donecheck and fix anything it reports.
+```
+
 ## What It Catches
 
 - unfinished markers and placeholder phrases in changed files
